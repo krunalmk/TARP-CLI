@@ -33,18 +33,19 @@ LIB = qrcodegencpp
 LIBFILE = lib$(LIB).a
 LIBOBJ = qrcodegen.o
 MAINS = terlocker_pro
+SHA_EXE = sha1.o
 
 # Build all binaries
 all: $(LIBFILE) $(MAINS)
 
 # Delete build output
 clean:
-	rm -f -- $(LIBOBJ) $(LIBFILE) $(MAINS:=.o) $(MAINS)
+	rm -f -- $(LIBOBJ) $(LIBFILE) $(SHA_EXE) $(MAINS:=.o) $(MAINS)
 	rm -rf .deps
 
 # Executable files
-%: %.o $(LIBFILE)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -L . -l $(LIB)
+%: %.o $(LIBFILE) $(SHA_EXE)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $< -L . -l $(LIB) 
 
 # The library
 $(LIBFILE): $(LIBOBJ)
