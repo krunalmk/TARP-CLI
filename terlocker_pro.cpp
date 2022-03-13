@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include "sha1.h"
 
-
 #include <climits>
 #include <cstdint>
 #include <cstdlib>
@@ -182,13 +181,32 @@ static void printQr(const QrCode &qr) {
 // Creates QR Codes with manually specified segments for better compactness.
 static void doSegmentDemo() {
 	// Illustration "golden"
-	const char *golden0 = "Golden ratio \xCF\x86 = 1.";
-	const char *golden1 = "6180339887498948482045868343656381177203091798057628621354486227052604628189024497072072041893911374";
-	const char *golden2 = "......";
-	const QrCode qr2 = QrCode::encodeText(
-		(std::string(golden0) + golden1 + golden2).c_str(),
+	// const char *golden0 = "Golden ratio \xCF\x86 = 1.";
+	// const char *golden1 = "6180339887498948482045868343656381177203091798057628621354486227052604628189024497072072041893911374";
+	// const char *golden2 = "......";
+    const char *golden0 = "qwerty";
+	
+	// const QrCode qr2 = QrCode::encodeText(
+	// 	(std::string(golden0) + golden1 + golden2).c_str(),
+	// 	QrCode::Ecc::LOW);
+
+// const char *text = "qwerty";
+
+// const QrCode qr3 = QrCode::encodeText( "qwerty", QrCode::Ecc::QUARTILE);
+// 	printQr(qr3);
+
+const QrCode qr0 = QrCode::encodeText("314159265358979323846264338327950288419716939937510", QrCode::Ecc::MEDIUM);
+	printQr(qr0);
+
+/*
+    const QrCode qr2 = QrCode::encodeText(
+		(std::string(golden0)).c_str(),
 		QrCode::Ecc::LOW);
 	printQr(qr2);
+*/
+
+
+
 	
 	// std::vector<uint8_t> bytes(golden0, golden0 + std::strlen(golden0));
 	// const QrCode qr3 = QrCode::encodeSegments(

@@ -30,7 +30,7 @@ def query():
         # code = request.args[1]
         if args["code"] != None:
             print( args["code"])
-            f = open("code.txt", "w")
+            f = open("/home/kmk/Documents/College study materials/Sem 6/TARP/Terlocker_Pro/code.txt", "w")
             f.write(args["code"])
             f.close()
         
@@ -44,4 +44,4 @@ def query():
 
 
 if __name__ == "__main__":
-	app.run(host="192.168.185.245", port="8000")
+	app.run(host="192.168.27.58", port="8000")
