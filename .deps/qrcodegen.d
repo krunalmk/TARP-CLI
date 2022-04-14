@@ -1,1 +1,1 @@
-qrcodegen.o: qrcodegen.cpp qrcodegen.hpp
+qrcodegen.o: qrcodegen.c qrcodegen.h

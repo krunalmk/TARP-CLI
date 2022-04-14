@@ -44,4 +44,4 @@ def query():
 
 
 if __name__ == "__main__":
-	app.run(host="192.168.27.58", port="8000")
+	app.run(host="192.168.115.58", port="8000")

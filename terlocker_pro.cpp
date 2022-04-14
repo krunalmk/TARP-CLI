@@ -25,6 +25,10 @@
 #include <locale.h>
 #include <sys/stat.h>
 
+#include <podofo/podofo.h>
+#include "QrUtils.hpp"
+
+using namespace PoDoFo;
 
 using std::uint8_t;
 using qrcodegen::QrCode;
@@ -66,6 +70,7 @@ const static unsigned char unb64[] = {
         0, 0, 0, 0, 0, 0,
 }; // This array has 256 elements
 
+void DrawText(const char *,PdfPainter *,PdfPage* );
 static void doSegmentDemo();
 static std::string toSvgString(const QrCode &qr, int border);
 static void printQr(const QrCode &qr);
@@ -91,42 +96,8 @@ void sig_handler(int signum){
    * It will respond only when user enters terlocker's password.
    * After entering the password the terminal will function normally.
 */
-void lockTerminals_And_UnlockIfUserEntersPassword( char *password){
-  char strFromYesNoTxt[5];
-  char str[MAX_NAME_LEN];
-  fstream YesNoFile("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in | ios::trunc);
-  YesNoFile << "Yes";
-  YesNoFile.close();
 
-  system("clear");
-  system("xmodmap -e \'keycode 52 = 0x0000\'");
-  
-  for(int i=0;; i++){
-    getch( str); // Getting inputs like cmd, texts from user
-    // Checking each time if YesNo.txt has password set "Yes" or "No"
-    fstream File("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in);
-    File >> strFromYesNoTxt;
-    File.close();
 
-    if( strcmp( strFromYesNoTxt, "No") == 0){
-      system("clear");
-      exit(1);
-    }
-    cout<<"Enter password to unlock terminal\n";
-    doSegmentDemo();
-
-    // Check if entered password matches actual password. If matches then exit from terlocker
-    if( strcmp( password, str) == 0){
-        fstream YesNoFile("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in | ios::trunc);
-        YesNoFile << "No";
-        YesNoFile.close();
-        signal(SIGINT,SIG_DFL);
-        system("xmodmap -e \'keycode 52 = 0x7a\'");
-        // system("clear");
-        exit(1);
-    }
-  }
-}
 
 bool checkForcharZ( char* str){
     for( int i=0; i< strlen(str); i++)
@@ -195,8 +166,29 @@ static void doSegmentDemo() {
 // const QrCode qr3 = QrCode::encodeText( "qwerty", QrCode::Ecc::QUARTILE);
 // 	printQr(qr3);
 
-const QrCode qr0 = QrCode::encodeText("314159265358979323846264338327950288419716939937510", QrCode::Ecc::MEDIUM);
+
+    char response_str[100];
+        system("/usr/bin/python3 main_server_flask.py &>/dev/null &"); //   /home/kmk/Documents/College\ study\ materials/Sem\ 6/TARP/Terlocker_Pro/
+
+const QrCode qr0 = QrCode::encodeText("qwerty", QrCode::Ecc::LOW);
 	printQr(qr0);
+
+
+    FILE *file;
+    while((file = fopen("code.txt","r")) == NULL)
+    {
+        
+    }
+    // file exists
+        fscanf(file, "%[^\n]", response_str);
+        fclose(file);
+        if (remove("code.txt") == 0)
+            printf("Deleted successfully");
+/////
+    if (strcmp(response_str, "qwerty") == 0) {
+        cout<<"Hi";
+        exit (0);
+    }
 
 /*
     const QrCode qr2 = QrCode::encodeText(
@@ -215,6 +207,247 @@ const QrCode qr0 = QrCode::encodeText("31415926535897932384626433832795028841971
 	// printQr(qr3);
 }
 
+void PrintHelp()
+{
+    std::cout << "This is a example application for the PoDoFo PDF library AND QR ." << std::endl
+              << "It creates a small PDF file containing the text >Hello World!< and this QR" << std::endl
+              << "Please see http://podofo.sf.net for more information" << std::endl << std::endl;
+    std::cout << "Usage:" << std::endl;
+    std::cout << "  examplehelloworld [outputfile.pdf] [text]" << std::endl << std::endl;
+}
+
+void HelloWorld( const char* pszFilename ,const char* text)
+{
+
+    PdfStreamedDocument document( "QR-code.pdf");//pszFilename );
+    PdfPainter painter;
+    PdfPage* pPage;
+    PdfFont* pFont;
+
+	try {
+		pPage = document.CreatePage( PdfPage::CreateStandardPageSize( ePdfPageSize_A4 ) );
+		if( !pPage )
+		{
+			PODOFO_RAISE_ERROR( ePdfError_InvalidHandle );
+		}
+		painter.SetPage( pPage );
+		pFont = document.CreateFont( "Arial" );
+		if( !pFont )
+		{
+			PODOFO_RAISE_ERROR( ePdfError_InvalidHandle );
+		}
+
+		pFont->SetFontSize( 18.0 );
+		painter.SetFont( pFont );
+		// DrawText(text ,&painter,pPage);
+        DrawText("qwerty" ,&painter,pPage);
+    	painter.FinishPage();
+
+		document.GetInfo()->SetCreator ( PdfString("examplahelloworld - A PoDoFo test application") );
+		document.GetInfo()->SetAuthor  ( PdfString("Dominik Seichter") );
+		document.GetInfo()->SetTitle   ( PdfString("Hello World") );
+		document.GetInfo()->SetSubject ( PdfString("Testing the PoDoFo PDF Library") );
+		document.GetInfo()->SetKeywords( PdfString("Test;PDF;Hello World;") );
+
+		document.Close();
+        system("evince QR-code.pdf");
+	} catch ( PdfError & e ) {
+
+		try {
+			painter.FinishPage();
+		} catch( ... ) {
+
+		}
+
+		throw e;
+	}
+}
+
+
+void getQRCode(){
+try {
+
+        HelloWorld( "QR-code.pdf" ,"qwerty");
+
+    } catch( PdfError & eCode ) {
+
+        eCode.PrintErrorMsg();
+        // return eCode.GetError();
+    }
+
+
+    try {
+
+        PdfEncodingFactory::FreeGlobalEncodingInstances();
+    } catch( PdfError & eCode ) {
+
+        eCode.PrintErrorMsg();
+        // return eCode.GetError();
+    }
+}
+
+
+
+void DrawText(const char *text,PdfPainter *painter,PdfPage* pPage)
+{
+     GtkQR::QrMatrix matrix;
+     GtkQR::QRDataContainer data;
+     std::string value(text);
+
+
+     // QR_Data is an information container,
+     // these 3 parameters (correction_level,isMicro and enable_UTF8) are to choose,
+     // other parameters are obtained when creating the QR with GetQrMatrix
+
+     data.correction_level=GtkQR::QRErrorCorrectionLevel::QR_ERROR_CORRECTION_LEVEL_LOW;
+     data.isMicro=false;
+     data.enable_UTF8=true;
+
+     //some variables
+     int widthQR;
+     int startX,startY;
+
+     double with_modules;
+
+
+     // Get QR Matrix
+     matrix=GtkQR::QrMatrix::GetQrMatrix(value ,&data );
+
+     //Now data has QR information
+
+    if(data.getqrversion() ==GtkQR::QRVersion::QR_VERSION_NULL)
+        painter->DrawText( 60, pPage->GetPageSize().GetHeight() - 60, "Unable to create qr image");
+    else
+    {
+        // Choose random width and start point Y , start point X is centered **/
+
+        widthQR= 0.4f * pPage->GetPageSize().GetWidth();
+        startX=(pPage->GetPageSize().GetWidth()-widthQR)/2;
+        startY= pPage->GetPageSize().GetHeight() - 200;
+
+        // QR is format by small rectangles called modules
+        // calculate module size (width of QR / number of rows or columns ) :
+
+        with_modules = static_cast<double>(widthQR) / data.getnum_modules();
+
+        // draw text
+        painter->DrawText( 60, pPage->GetPageSize().GetHeight() - 60, text );
+
+        // iterate QR matrix points and draw when values is '1'
+        // qr matrix start upper left but pdf start down left
+
+
+        for(int i= 0; i < data.getnum_modules() ; i++ )
+        {
+            for(int a= 0; a < data.getnum_modules() ; a++ )
+            {
+                if(matrix.getValue(i,a))
+                {
+                  painter->Rectangle( startX + i*with_modules,startY - a*with_modules, with_modules,with_modules );
+                }
+            }
+        }
+
+        painter->FillAndStroke () ;
+
+
+        //iteration method
+        value ="gtkQRmm";
+        data.isMicro=true;
+
+        matrix=GtkQR::QrMatrix::GetQrMatrix(value ,&data );
+        if(data.getqrversion() !=GtkQR::QRVersion::QR_VERSION_NULL)
+        {
+          // recalculate  **/
+
+          widthQR= 0.1f * pPage->GetPageSize().GetWidth();
+          startX= 10;
+          startY= widthQR + startX;
+
+          with_modules = static_cast<double>(widthQR) / data.getnum_modules();
+
+          auto _lambda= [painter,startX,startY,with_modules] (unsigned short x,unsigned short y,bool isForeground) {
+
+             if(isForeground)
+                    painter->Rectangle( startX + x*with_modules,startY - y*with_modules, with_modules,with_modules );
+
+          };
+
+          matrix.iterate(_lambda);
+          painter->FillAndStroke () ;
+        }
+
+
+
+
+    }
+
+
+}
+
+
+void lockTerminals_And_UnlockIfUserEntersPassword( char *password){
+  char strFromYesNoTxt[5];
+  char str[MAX_NAME_LEN];
+  fstream YesNoFile("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in | ios::trunc);
+  YesNoFile << "Yes";
+  YesNoFile.close();
+
+  system("clear");
+  system("xmodmap -e \'keycode 52 = 0x0000\'");
+  
+  for(int i=0;; i++){
+    getch( str); // Getting inputs like cmd, texts from user
+    // Checking each time if YesNo.txt has password set "Yes" or "No"
+    fstream File("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in);
+    File >> strFromYesNoTxt;
+    File.close();
+
+    if( strcmp( strFromYesNoTxt, "No") == 0){
+      system("clear");
+      exit(1);
+    }
+    cout<<"Enter password to unlock terminal\n";
+    // doSegmentDemo();
+
+        char response_str[100];
+        system("/usr/bin/python3 main_server_flask.py &>/dev/null &");
+
+        getQRCode();
+/////
+    FILE *file;
+    while((file = fopen("code.txt","r")) == NULL)
+    {
+        
+    }
+    // file exists
+        fscanf(file, "%[^\n]", response_str);
+        fclose(file);
+        if (remove("code.txt") == 0){
+            printf("Deleted successfully");
+            fstream YesNoFile("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in | ios::trunc);
+            YesNoFile << "No";
+            YesNoFile.close();
+            signal(SIGINT,SIG_DFL);
+            system("xmodmap -e \'keycode 52 = 0x7a\'");
+            // system("clear");
+            exit(1);
+        }
+
+    // Check if entered password matches actual password. If matches then exit from terlocker
+    // if( strcmp( password, str) == 0){
+    //     fstream YesNoFile("/home/kmk/Terlocker_Pro/YesNo.txt", ios::out | ios::in | ios::trunc);
+    //     YesNoFile << "No";
+    //     YesNoFile.close();
+    //     signal(SIGINT,SIG_DFL);
+    //     system("xmodmap -e \'keycode 52 = 0x7a\'");
+    //     // system("clear");
+    //     exit(1);
+    // }
+  }
+}
+
+
 int main( int args, char *argv[]){
   signal(SIGINT,sig_handler); // Register signal handler
   char str[MAX_NAME_LEN], yesOrNo;
@@ -232,7 +465,8 @@ int main( int args, char *argv[]){
         // Check if user wants to set new password
       if( strcmp( argv[1], "setpassword") == 0){
         char tpStr[MAX_NAME_LEN];
-	      doSegmentDemo();
+	    //   doSegmentDemo();
+        getQRCode();
         cout<<"Enter current password: ";
         cin>> tpStr;
         
@@ -500,7 +734,7 @@ void generateQRCode_CheckAppResponse(){
     GetWC(four_bytes_w, four_bytes);
 
     char response_str[100];
-        system("/usr/bin/python3 /home/kmk/Documents/College study materials/Sem 6/TARP/Terlocker_Pro/main_server_flask.py");
+        system("/usr/bin/python3 /home/kmk/Documents/College\ study\ materials/Sem\ 6/TARP/Terlocker_Pro/main_server_flask.py");
 /////
     FILE *file;
     while((file = fopen("code.txt","r")) == NULL)
